@@ -14,64 +14,49 @@ O diagrama a seguir descreve o fluxo integrado completo, destacando o papel estr
 
 ```mermaid
 flowchart TD
-    subgraph Ecossistema_Git ["Ambiente de Código e Versionamento (GitHub)"]
-        TemplateRepo[("📦 Repositório de Template Customizado\n(databricks_template_schema.json + *.tmpl)")]
-        ProjectRepo[("💻 Repositório do Novo Projeto\n(Application Code + databricks.yml)")]
-        BranchDev["Branch: developer"]
-        BranchMain["Branch: main"]
-    end
+    Dev["👤 Engenheiro de Dados"]
+    TemplateRepo[("📦 Repo de Template\ndatabricks_template_schema.json")]
+    GitFolder["💻 Git Folder - DEV\nDesenvolvimento Interativo"]
+    FeatureBranch["🔀 Feature Branch\nCommit e Push"]
+    PR_Dev["📋 PR → developer\nCode Review entre pares"]
+    BranchDev["✅ Merge em developer"]
 
-    Dev["Engenheiro de Dados"]
+    Dev -->|"1. databricks bundle init"| TemplateRepo
+    TemplateRepo -.->|"2. Gera estrutura do projeto"| GitFolder
+    GitFolder -->|"3. Desenvolve e testa"| FeatureBranch
+    FeatureBranch -->|"4. Abre Pull Request"| PR_Dev
+    PR_Dev -->|"5. Aprovação + Merge"| BranchDev
+    BranchDev -->|"6. Disparo automático"| CI_Runner["⚙️ GitHub Actions Runner"]
 
-    %% Fase de Inicialização
-    Dev -->|1. databricks bundle init| TemplateRepo
-    TemplateRepo -.->|2. Provedoria da estrutura base| GitFolder["Workspace: Git Folder (DEV)"]
-    
-    %% Fase de Desenvolvimento e Testes
-    GitFolder -->|3. Desenvolvimento interativo| GitFolder
-    GitFolder -->|4. Commit & Push na feature branch| ProjectRepo
+    subgraph Esteira_CI ["Pipeline de CI — push em developer"]
+        direction TB
+        OIDC_CI["🔐 Auth OIDC → DEV"]
+        Setup_CI["📦 Setup: CLI + uv + pytest"]
+        G1["🧪 Gate 1: pytest + bundle validate"]
+        G2["🤖 Gate 2: Revisor IA - Consultivo"]
+        DeployDev["🚀 Deploy DEV: bundle deploy -t dev"]
 
-    %% Promoção para Developer
-    ProjectRepo -->|5. Abertura de PR para developer| PR_Dev["Pull Request → developer"]
-    PR_Dev -->|6. Code Review entre pares| PR_Dev
-
-    %% Esteira de Integração Contínua (disparada pelo PR → developer)
-    PR_Dev -->|7. Merge aprovado| BranchDev
-    BranchDev -->|8. Disparo automático| Runner_CI["GitHub Actions Runner (CI)"]
-
-    subgraph Esteira_CI ["Pipeline de CI (Trigger: push em developer)"]
-        OIDC_CI["Autenticação OIDC\n(Workload Identity Federation → DEV)"]
-        Setup_CI["Instalação: CLI + uv + pytest"]
-        
-        subgraph Valida_Gates ["Mecanismos de Qualidade"]
-            G1["Gate 1: Validador Determinístico\n(uv run pytest + bundle validate)"]
-            G2["Gate 2: Revisor IA\n(Consultivo / ai_query)"]
-        end
-        
-        DeployDev["Deploy Automático em DEV\n(bundle deploy -t dev)"]
-        
         OIDC_CI --> Setup_CI --> G1 --> G2 --> DeployDev
     end
 
-    Runner_CI --> Esteira_CI
+    CI_Runner --> Esteira_CI
 
-    %% Promoção para Produção
-    DeployDev -->|9. CI Verde + DEV Estável| PR_Main["Pull Request → main"]
-    PR_Main -->|10. Revisão Humana + Aprovação| BranchMain
+    DeployDev -->|"7. CI verde + DEV estável"| PR_Main["📋 PR → main\nRevisão Humana"]
+    PR_Main -->|"8. Aprovação humana"| BranchMain["✅ Merge em main"]
+    BranchMain -->|"9. Disparo automático"| EnvProd["🔒 GitHub Environment: PROD\nRequired Reviewers"]
 
-    BranchMain -->|11. Merge dispara CD| EnvProd["GitHub Environment: PROD\n(Required Reviewers)"]
-    
-    subgraph Esteira_CD ["Pipeline de CD (Trigger: push em main)"]
-        OIDC_CD["Autenticação OIDC\n(Workload Identity Federation → PROD)"]
-        DeployPRD["1. databricks bundle deploy -t prod"]
-        RunPRD["2. databricks bundle run -t prod"]
-        HealthCheck["3. Health Check\n(Sondagem Ativa de Status)"]
-        
+    subgraph Esteira_CD ["Pipeline de CD — push em main"]
+        direction TB
+        OIDC_CD["🔐 Auth OIDC → PROD"]
+        DeployPRD["📦 bundle deploy -t prod"]
+        RunPRD["▶️ bundle run -t prod"]
+        HealthCheck["❤️ Health Check\nSondagem Ativa - 5min"]
+
         OIDC_CD --> DeployPRD --> RunPRD --> HealthCheck
     end
 
-    EnvProd -->|Aprovação manual concedida| Esteira_CD
-    HealthCheck -->|Sucesso| TargetProd[("🚀 Databricks Workspace (PROD)\nRecurso Ativo e Estabilizado")]
+    EnvProd -->|"Aprovação concedida"| Esteira_CD
+    HealthCheck -->|"✅ Sucesso"| TargetProd[("🚀 Databricks PROD\nRecurso Ativo")]
 ```
 
 ---

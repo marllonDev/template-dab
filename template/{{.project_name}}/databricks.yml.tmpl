@@ -24,8 +24,8 @@ targets:
     default: true
     variables:
       catalog: {{.catalog_dev}}
-    workspace:
-      host: {{"{{"}}vars.DATABRICKS_HOST_DEV{{"}}"}}
+    # O workspace host será resolvido automaticamente pela variável de ambiente
+    # DATABRICKS_HOST configurada no CI/CD ou pelo profile local ativo.
     tags: &default_tags
       system: {{.system}}
       environment: dev
@@ -41,7 +41,6 @@ targets:
     variables:
       catalog: {{.catalog_prod}}
     workspace:
-      host: {{"{{"}}vars.DATABRICKS_HOST_PRD{{"}}"}}
       root_path: /Shared/.bundle/prod/${bundle.name}
     tags:
       <<: *default_tags

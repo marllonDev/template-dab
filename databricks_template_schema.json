@@ -1,6 +1,6 @@
 {
   "welcome_message": "\n🏗️  Template Corporativo DAB — Esteira CI/CD para Databricks\n\nEste template cria um projeto Databricks padronizado com:\n  • Configuração DAB (databricks.yml) com targets dev e prod\n  • Workflows GitHub Actions para CI e CD\n  • Testes com pytest + uv\n  • Tags corporativas (FinOps) pré-configuradas\n\n",
-  "min_databricks_cli_version": "0.230.0",
+  "min_databricks_cli_version": "v0.230.0",
   "properties": {
     "project_name": {
       "type": "string",

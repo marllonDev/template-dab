@@ -1,0 +1,50 @@
+"""
+Testes unitários para {{.project_name}}.
+
+Execute com: uv run pytest -s
+"""
+
+import pytest
+from unittest.mock import patch
+
+from src.{{.project_name}}.main import parse_args, run
+
+
+class TestParseArgs:
+    """Testes para o parser de argumentos."""
+
+    def test_parse_args_com_valores_validos(self):
+        """Deve parsear corretamente os argumentos catalog e schema."""
+        with patch(
+            "sys.argv",
+            ["main.py", "--catalog", "dev", "--schema", "bronze"],
+        ):
+            args = parse_args()
+            assert args.catalog == "dev"
+            assert args.schema == "bronze"
+
+    def test_parse_args_sem_catalog_deve_falhar(self):
+        """Deve falhar se --catalog não for fornecido."""
+        with patch("sys.argv", ["main.py", "--schema", "bronze"]):
+            with pytest.raises(SystemExit):
+                parse_args()
+
+    def test_parse_args_sem_schema_deve_falhar(self):
+        """Deve falhar se --schema não for fornecido."""
+        with patch("sys.argv", ["main.py", "--catalog", "dev"]):
+            with pytest.raises(SystemExit):
+                parse_args()
+
+
+class TestRun:
+    """Testes para a função principal run."""
+
+    def test_run_executa_sem_erros(self):
+        """Deve executar sem lançar exceções."""
+        # A função run() com a implementação exemplo apenas faz logging,
+        # então deve executar sem erros.
+        run(catalog="dev", schema="default")
+
+    def test_run_com_catalogo_prod(self):
+        """Deve executar corretamente com catálogo de produção."""
+        run(catalog="prod", schema="analytics")

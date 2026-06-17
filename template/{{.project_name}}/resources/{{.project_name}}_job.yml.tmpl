@@ -1,0 +1,47 @@
+# {{.project_name}}_job.yml
+# Definição do job principal para o bundle {{.project_name}}
+
+resources:
+  jobs:
+    {{.project_name}}_job:
+      name: {{.project_name}}_job
+      description: "Job principal do projeto {{.project_name}}"
+
+      # Tags corporativas herdadas do target ativo
+      tags:
+        system: ${bundle.tags.system}
+        environment: ${bundle.tags.environment}
+        department: ${bundle.tags.department}
+        stakeholders: ${bundle.tags.stakeholders}
+
+      # Configuração de alerta por e-mail (ajuste conforme necessário)
+      email_notifications:
+        on_failure:
+          - "{{.stakeholders}}"
+
+      tasks:
+        - task_key: main_task
+          description: "Executa o script principal do projeto"
+          python_script_task:
+            source: WORKSPACE
+            script_path: src/{{.project_name}}/main.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+              - "--schema"
+              - "${var.schema}"
+
+          # Cluster efêmero para execução
+          new_cluster:
+            spark_version: "15.4.x-scala2.12"
+            num_workers: 1
+            node_type_id: "Standard_D4ds_v5"
+            data_security_mode: SINGLE_USER
+
+          # Timeout de 1 hora
+          timeout_seconds: 3600
+
+      # Agendamento (descomente e ajuste conforme necessário)
+      # schedule:
+      #   quartz_cron_expression: "0 0 8 * * ?"
+      #   timezone_id: "America/Sao_Paulo"

@@ -1,0 +1,84 @@
+# {{.project_name}}
+
+Projeto Databricks gerado pelo **template corporativo DAB**.
+
+## 📋 Informações do Projeto
+
+| Atributo | Valor |
+|---|---|
+| **Sistema** | `{{.system}}` |
+| **Departamento** | `{{.department}}` |
+| **Stakeholders** | `{{.stakeholders}}` |
+| **Catálogo DEV** | `{{.catalog_dev}}` |
+| **Catálogo PROD** | `{{.catalog_prod}}` |
+| **Schema** | `{{.schema_name}}` |
+
+## 🚀 Quick Start
+
+### Pré-requisitos
+
+- [Databricks CLI](https://docs.databricks.com/dev-tools/cli/install.html) (>= 0.230.0)
+- [uv](https://docs.astral.sh/uv/) (gerenciador de pacotes Python)
+- Autenticação configurada no Databricks (OIDC ou perfil local)
+
+### Desenvolvimento Local
+
+```bash
+# Instalar dependências e rodar testes
+uv run pytest -s
+
+# Validar o bundle
+databricks bundle validate --target dev
+
+# Deploy em DEV
+databricks bundle deploy --target dev
+
+# Executar o job em DEV
+databricks bundle run {{.project_name}}_job --target dev
+```
+
+## 📂 Estrutura do Projeto
+
+```
+{{.project_name}}/
+├── databricks.yml           # Configuração principal do DAB
+├── pyproject.toml            # Configuração Python (uv + pytest)
+├── src/
+│   └── {{.project_name}}/
+│       ├── __init__.py
+│       └── main.py           # Script principal do pipeline
+├── tests/
+│   ├── __init__.py
+│   └── test_main.py          # Testes unitários
+├── resources/
+│   └── {{.project_name}}_job.yml  # Definição do job Databricks
+└── .github/
+    └── workflows/
+        ├── ci.yml             # CI: push em developer
+        └── cd.yml             # CD: push em main (produção)
+```
+
+## 🔀 Estratégia de Branching
+
+```
+feature/* → PR → developer → PR → main
+                     │                │
+                  CI + DEV         CD + PROD
+```
+
+1. Crie uma branch `feature/sua-funcionalidade` a partir de `developer`
+2. Desenvolva e faça commit
+3. Abra um **PR para `developer`** (code review entre pares)
+4. Após merge, a esteira de **CI** roda automaticamente (testes + deploy DEV)
+5. Com DEV estável, abra um **PR para `main`**
+6. Após **aprovação humana**, o merge dispara o **CD** (deploy PROD)
+
+## 🏷️ Tags Corporativas
+
+Este projeto inclui as seguintes tags obrigatórias para controle financeiro (FinOps):
+
+- `system`: {{.system}}
+- `environment`: `dev` ou `prod` (automático por target)
+- `department`: {{.department}}
+- `stakeholders`: {{.stakeholders}}
+- `managed_by`: `dab`

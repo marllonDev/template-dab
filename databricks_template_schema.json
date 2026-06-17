@@ -1,0 +1,51 @@
+{
+  "welcome_message": "\n🏗️  Template Corporativo DAB — Esteira CI/CD para Databricks\n\nEste template cria um projeto Databricks padronizado com:\n  • Configuração DAB (databricks.yml) com targets dev e prod\n  • Workflows GitHub Actions para CI e CD\n  • Testes com pytest + uv\n  • Tags corporativas (FinOps) pré-configuradas\n\n",
+  "min_databricks_cli_version": "0.230.0",
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "default": "my_databricks_project",
+      "description": "Nome do projeto (usado como nome do bundle e dos recursos)",
+      "order": 1,
+      "pattern": "^[a-z][a-z0-9_]{2,}$",
+      "pattern_match_failure_message": "O nome do projeto deve começar com letra minúscula, conter apenas letras minúsculas, números e underscores, e ter no mínimo 3 caracteres."
+    },
+    "system": {
+      "type": "string",
+      "default": "data-platform",
+      "description": "Nome do sistema (tag FinOps obrigatória, ex: data-platform, crm, erp)",
+      "order": 2
+    },
+    "department": {
+      "type": "string",
+      "default": "engenharia-dados",
+      "description": "Departamento responsável pelo projeto (tag FinOps obrigatória)",
+      "order": 3
+    },
+    "stakeholders": {
+      "type": "string",
+      "default": "time-dados",
+      "description": "Stakeholders do projeto (tag FinOps obrigatória, separados por vírgula)",
+      "order": 4
+    },
+    "catalog_dev": {
+      "type": "string",
+      "default": "dev",
+      "description": "Nome do catálogo Unity Catalog para o ambiente DEV",
+      "order": 5
+    },
+    "catalog_prod": {
+      "type": "string",
+      "default": "prod",
+      "description": "Nome do catálogo Unity Catalog para o ambiente PROD",
+      "order": 6
+    },
+    "schema_name": {
+      "type": "string",
+      "default": "default",
+      "description": "Nome do schema padrão no Unity Catalog",
+      "order": 7
+    }
+  },
+  "success_message": "\n✅ Projeto '{{.project_name}}' criado com sucesso!\n\n📋 Próximos passos:\n   1. cd {{.project_name}}\n   2. git init && git remote add origin <url-do-repo>\n   3. Configure as variáveis no GitHub Environment (dev e prod):\n      - DATABRICKS_HOST_DEV / DATABRICKS_HOST_PRD\n      - DATABRICKS_CLIENT_ID_DEV / DATABRICKS_CLIENT_ID_PRD\n   4. Configure as Branch Protection Rules para 'developer' e 'main'\n   5. databricks bundle validate --target dev\n\n"
+}

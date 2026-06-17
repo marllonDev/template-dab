@@ -1,0 +1,97 @@
+# ──────────────────────────────────────────────────────────────
+# CD Pipeline — Deploy em Produção
+# Disparado automaticamente quando há push na branch 'main'
+# (ou seja, após merge de um PR developer → main com aprovação humana)
+#
+# IMPORTANTE: O GitHub Environment 'prod' deve ter Required Reviewers
+# configurados para garantir aprovação humana antes da execução.
+# ──────────────────────────────────────────────────────────────
+
+name: CD - Deploy Produção
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:     # Permite execução manual em caso de necessidade
+
+permissions:
+  id-token: write        # Requisito obrigatório para OIDC
+  contents: read
+
+defaults:
+  run:
+    working-directory: .
+
+jobs:
+  deploy-prd:
+    name: Implantação e Verificação PROD
+    runs-on: ubuntu-latest
+    environment: prod    # Vincula ao GitHub Environment com aprovadores
+
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{"{{"}} vars.DATABRICKS_HOST_PRD {{"}}"}}
+      DATABRICKS_CLIENT_ID: ${{"{{"}} vars.DATABRICKS_CLIENT_ID_PRD {{"}}"}}
+
+    steps:
+      # ── Checkout ──
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      # ── Setup de Ferramentas ──
+      - name: Instalar Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Instalar Gerenciador uv
+        uses: astral-sh/setup-uv@v4
+
+      # ── Deploy em PROD ──
+      - name: Deploy do Bundle para Produção
+        run: databricks bundle deploy --target prod
+
+      # ── Execução do Recurso ──
+      - name: Executar Recurso para Atualização de Código
+        run: databricks bundle run {{.project_name}}_job --target prod
+
+      # ── Health Check ──
+      - name: "Health Check — Sondagem Ativa de Inicialização"
+        run: |
+          echo "🔍 Iniciando monitoramento ativo do status do recurso..."
+          echo "   Timeout: 5 minutos (20 tentativas × 15 segundos)"
+          echo ""
+
+          for i in $(seq 1 20); do
+            RESPONSE=$(databricks jobs get-run --run-id "$DATABRICKS_RUN_ID" --output json 2>/dev/null || echo '{}')
+            LIFECYCLE=$(echo "$RESPONSE" | jq -r '.state.life_cycle_state // "PENDING"')
+            RESULT=$(echo "$RESPONSE" | jq -r '.state.result_state // "UNKNOWN"')
+
+            echo "  [$i/20] lifecycle=$LIFECYCLE | result=$RESULT"
+
+            # Sucesso: job terminou com resultado positivo
+            if [[ "$LIFECYCLE" == "TERMINATED" && "$RESULT" == "SUCCESS" ]]; then
+              echo ""
+              echo "✅ Recurso finalizado com sucesso no workspace de Produção."
+              exit 0
+            fi
+
+            # Falha: erro interno ou resultado de falha
+            if [[ "$LIFECYCLE" == "INTERNAL_ERROR" || "$RESULT" == "FAILED" || "$LIFECYCLE" == "SKIPPED" ]]; then
+              echo ""
+              echo "❌ Falha crítica detectada: lifecycle=$LIFECYCLE result=$RESULT" >&2
+              exit 1
+            fi
+
+            # Cancelado
+            if [[ "$RESULT" == "CANCELED" || "$RESULT" == "TIMEDOUT" ]]; then
+              echo ""
+              echo "⚠️ Execução cancelada ou expirada: result=$RESULT" >&2
+              exit 1
+            fi
+
+            sleep 15
+          done
+
+          echo ""
+          echo "⚠️ Timeout: O recurso não atingiu um estado estável dentro de 5 minutos." >&2
+          exit 1

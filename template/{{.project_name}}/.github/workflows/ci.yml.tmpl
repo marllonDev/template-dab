@@ -1,0 +1,57 @@
+# ──────────────────────────────────────────────────────────────
+# CI Pipeline — Validação e Deploy em DEV
+# Disparado automaticamente quando há push na branch 'developer'
+# (ou seja, após merge de um PR feature/* → developer)
+# ──────────────────────────────────────────────────────────────
+
+name: CI - Validação e Deploy DEV
+
+on:
+  push:
+    branches:
+      - developer
+
+permissions:
+  id-token: write      # Requisito obrigatório para OIDC
+  contents: read
+
+defaults:
+  run:
+    working-directory: .
+
+jobs:
+  ci-dev:
+    name: Gate 1 + Deploy DEV
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{"{{"}} vars.DATABRICKS_HOST_DEV {{"}}"}}
+      DATABRICKS_CLIENT_ID: ${{"{{"}} vars.DATABRICKS_CLIENT_ID_DEV {{"}}"}}
+
+    steps:
+      # ── Checkout ──
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      # ── Setup de Ferramentas ──
+      - name: Instalar Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Instalar Gerenciador uv
+        uses: astral-sh/setup-uv@v4
+
+      # ── Gate 1: Testes Determinísticos ──
+      - name: "Gate 1 — Executar Testes Automatizados (pytest)"
+        run: uv run pytest -s
+
+      - name: "Gate 1 — Validação Estrutural do Bundle"
+        run: databricks bundle validate --target dev
+
+      # ── Deploy em DEV ──
+      - name: Deploy do Bundle para DEV
+        run: databricks bundle deploy --target dev
+
+      - name: Executar Job em DEV
+        run: databricks bundle run {{.project_name}}_job --target dev

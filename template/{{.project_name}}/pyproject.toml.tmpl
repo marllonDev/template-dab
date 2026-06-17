@@ -1,0 +1,19 @@
+[project]
+name = "{{.project_name}}"
+version = "0.1.0"
+description = "Projeto Databricks gerado pelo template corporativo DAB"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "databricks-sdk>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

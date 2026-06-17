@@ -1,0 +1,55 @@
+"""
+{{.project_name}} — Script principal
+Gerado pelo template corporativo DAB.
+
+Este script é executado como uma Python Script Task no Databricks.
+Ele demonstra um padrão básico de leitura/escrita usando Unity Catalog.
+"""
+
+import argparse
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("{{.project_name}}")
+
+
+def parse_args():
+    """Parseia os argumentos passados pela task do Databricks Job."""
+    parser = argparse.ArgumentParser(description="{{.project_name}} — Pipeline principal")
+    parser.add_argument("--catalog", required=True, help="Catálogo Unity Catalog ativo")
+    parser.add_argument("--schema", required=True, help="Schema Unity Catalog ativo")
+    return parser.parse_args()
+
+
+def run(catalog: str, schema: str):
+    """
+    Função principal do pipeline.
+
+    Substitua este conteúdo pela lógica do seu projeto.
+    O catálogo e schema são passados automaticamente pelo job
+    de acordo com o target ativo (dev/prod).
+    """
+    logger.info(f"Iniciando pipeline no catálogo: {catalog}.{schema}")
+
+    # ──────────────────────────────────────────────
+    # Exemplo: Leitura de uma tabela no Unity Catalog
+    # ──────────────────────────────────────────────
+    # from pyspark.sql import SparkSession
+    #
+    # spark = SparkSession.builder.getOrCreate()
+    # df = spark.read.table(f"{catalog}.{schema}.sua_tabela_origem")
+    #
+    # # Transformação
+    # df_transformed = df.filter(df["coluna"] > 0)
+    #
+    # # Escrita
+    # df_transformed.write.mode("overwrite").saveAsTable(
+    #     f"{catalog}.{schema}.sua_tabela_destino"
+    # )
+
+    logger.info("Pipeline finalizado com sucesso.")
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    run(catalog=args.catalog, schema=args.schema)
